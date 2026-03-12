@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Discernimiento – Juego Bíblico</title>
+  <meta name="description" content="Discernimiento – El juego bíblico del discernimiento. Iglesia Morada de Dios.">
+  <meta name="theme-color" content="#060e20">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+    /* ==================== RESET & BASE ==================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; font-size: 16px; }
+    body {
+      min-height: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      background: #060e20;
+      font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+      color: #f0deb4;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    :root {
+      --gold: #d4af37;
+      --gold-light: #f0c855;
+      --gold-pale: #f5e6c8;
+      --gold-dim: #8b6914;
+      --navy: #060e20;
+      --navy-mid: #0c1a38;
+      --navy-light: #132240;
+      --navy-card: rgba(12, 26, 56, 0.92);
+      --red-impostor: #c0392b;
+      --red-bright: #e74c3c;
+      --green-safe: #27ae60;
+      --white: #fff;
+      --radius: 18px;
+      --radius-sm: 10px;
+      --glow: 0 0 24px rgba(212,175,55,0.5);
+      --shadow-card: 0 8px 40px rgba(0,0,0,0.7);
+    }
+
+    #canvas-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-y: auto;
+      padding: 20px 16px 40px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(30px);
+      transition: opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1);
+      scrollbar-width: none;
+    }
+    .screen::-webkit-scrollbar { display: none; }
+    .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .screen.exit { opacity: 0; transform: translateY(-30px); pointer-events: none; }
+
+    #screen-home { justify-content: center; text-align: center; gap: 0; }
+    .home-logo {
+      width: 120px; height: 120px;
+      margin: 0 auto 20px;
+      position: relative;
+      animation: floatLogo 4s ease-in-out infinite;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .logo-svg { width: 100%; height: 100%; }
+    .home-title {
+      font-size: clamp(2.4rem, 9vw, 4rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--gold-light);
+      text-shadow: 0 0 30px rgba(240,200,85,0.6), 0 2px 4px rgba(0,0,0,0.8);
+      animation: titleGlow 3s ease-in-out infinite;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    @keyframes titleGlow {
+      0%,100% { text-shadow: 0 0 20px rgba(240,200,85,0.5), 0 2px 4px rgba(0,0,0,0.8); }
+      50% { text-shadow: 0 0 40px rgba(240,200,85,0.9), 0 0 80px rgba(212,175,55,0.4), 0 2px 4px rgba(0,0,0,0.8); }
+    }
+    .home-subtitle {
+      font-size: clamp(0.85rem, 3vw, 1.1rem);
+      color: var(--gold-pale);
+      opacity: 0.75;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .home-verse {
+      font-size: clamp(0.78rem, 2.5vw, 0.95rem);
+      color: var(--gold-pale);
+      opacity: 0.55;
+      font-style: italic;
+      margin-bottom: 40px;
+      max-width: 340px;
+    }
+    .home-credits {
+      font-size: clamp(0.65rem, 2.2vw, 0.78rem);
+      color: var(--gold-pale);
+      opacity: 0.45;
+      text-align: center;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .home-credits span { display: block; }
+    .divider-gold {
+      width: 80px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 10px auto;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 15px 36px; border-radius: 50px; border: none;
+      cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .btn:active { transform: scale(0.96) !important; }
+    .btn-primary {
+      background: linear-gradient(135deg, #d4af37, #f0c855, #b8930a);
+      color: #0a1628;
+      box-shadow: 0 4px 24px rgba(212,175,55,0.5), 0 2px 8px rgba(0,0,0,0.4);
+      font-size: 1.1rem; min-width: 200px;
+    }
+    .btn-primary:hover { box-shadow: 0 6px 32px rgba(212,175,55,0.7); transform: translateY(-2px); }
+    .btn-secondary { background: transparent; color: var(--gold); border: 1.5px solid var(--gold); box-shadow: none; }
+    .btn-secondary:hover { background: rgba(212,175,55,0.1); }
+    .btn-ghost { background: transparent; color: var(--gold-pale); opacity: 0.6; font-size: 0.85rem; padding: 10px 20px; }
+    .btn-ghost:hover { opacity: 1; }
+    .btn-danger { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; box-shadow: 0 4px 20px rgba(192,57,43,0.5); }
+    .btn-icon {
+      width: 48px; height: 48px; padding: 0; border-radius: 50%;
+      background: linear-gradient(135deg, #d4af37, #f0c855);
+      color: #0a1628; font-size: 1.3rem; min-width: unset; flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(212,175,55,0.4);
+    }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+    .btn-sm { padding: 10px 20px; font-size: 0.82rem; min-width: unset; }
+
+    .section-header { width: 100%; text-align: center; margin-bottom: 28px; }
+    .section-icon { font-size: 2.2rem; margin-bottom: 8px; display: block; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5)); }
+    .section-title { font-size: clamp(1.4rem, 5vw, 2rem); color: var(--gold-light); text-shadow: 0 0 20px rgba(212,175,55,0.4); letter-spacing: 0.05em; }
+    .section-sub { font-size: 0.85rem; color: var(--gold-pale); opacity: 0.6; margin-top: 4px; }
+
+    .card { background: var(--navy-card); border: 1px solid rgba(212,175,55,0.2); border-radius: var(--radius); padding: 20px; width: 100%; box-shadow: var(--shadow-card); backdrop-filter: blur(10px); }
+    .card-glow { box-shadow: var(--shadow-card), 0 0 0 1px rgba(212,175,55,0.15), inset 0 1px 0 rgba(212,175,55,0.1); }
+
+    #screen-players { gap: 16px; padding-top: 30px; }
+    .player-input-row { display: flex; gap: 10px; width: 100%; max-width: 480px; }
+    .input-field {
+      flex: 1; padding: 14px 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(212,175,55,0.3);
+      border-radius: 50px; color: var(--gold-pale);
+      font-family: inherit; font-size: 1rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-field::placeholder { color: rgba(240,222,180,0.35); }
+    .input-field:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.15); }
+    .players-list { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; }
+    .player-item {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,175,55,0.15);
+      border-radius: 50px; padding: 10px 16px;
+      animation: slideIn 0.25s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    .player-num { width: 28px; height: 28px; background: linear-gradient(135deg, var(--gold-dim), var(--gold)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: #0a1628; flex-shrink: 0; }
+    .player-name { flex: 1; font-size: 0.95rem; color: var(--gold-pale); }
+    .btn-remove { background: none; border: none; color: rgba(231,76,60,0.5); cursor: pointer; font-size: 1.1rem; padding: 4px; border-radius: 50%; transition: color 0.2s, background 0.2s; line-height: 1; }
+    .btn-remove:hover { color: var(--red-bright); background: rgba(231,76,60,0.1); }
+    .player-count-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.25); border-radius: 50px; padding: 6px 16px; font-size: 0.85rem; color: var(--gold); }
+    .min-note { font-size: 0.75rem; color: var(--gold-pale); opacity: 0.45; text-align: center; }
+    .actions-row { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 480px; margin-top: 4px; }
+
+    #screen-settings { gap: 16px; padding-top: 30px; }
+    .settings-block { width: 100%; max-width: 480px; }
+    .settings-label { font-size: 0.78rem; color: var(--gold); opacity: 0.7; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; }
+    .toggle-label { font-size: 0.95rem; color: var(--gold-pale); }
+    .toggle-desc { font-size: 0.75rem; color: var(--gold-pale); opacity: 0.5; margin-top: 2px; }
+    .toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 50px; cursor: pointer; transition: background 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+    .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .toggle input:checked + .toggle-slider { background: var(--gold); border-color: var(--gold); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+    .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .cat-btn { padding: 12px 10px; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(212,175,55,0.2); border-radius: var(--radius-sm); color: var(--gold-pale); font-family: inherit; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.3; }
+    .cat-btn.selected { background: rgba(212,175,55,0.18); border-color: var(--gold); color: var(--gold-light); box-shadow: 0 0 12px rgba(212,175,55,0.2); }
+    .cat-btn .cat-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+    .cat-btn-all { grid-column: 1 / -1; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.05em; }
+
+    #screen-reveal { justify-content: center; gap: 20px; padding: 20px 16px 40px; }
+    .reveal-progress { font-size: 0.78rem; color: var(--gold); opacity: 0.6; letter-spacing: 0.1em; text-align: center; }
+    .reveal-player-name { font-size: clamp(1.6rem, 6vw, 2.4rem); color: var(--gold-light); text-align: center; text-shadow: 0 0 20px rgba(240,200,85,0.5); letter-spacing: 0.05em; animation: namePulse 1s ease; }
+    @keyframes namePulse { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .reveal-instruction { font-size: 0.9rem; color: var(--gold-pale); opacity: 0.6; text-align: center; }
+
+    .flip-card-wrap { width: min(320px, 90vw); height: min(200px, 55vw); perspective: 1000px; cursor: pointer; }
+    .flip-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.34,1.26,0.64,1); }
+    .flip-card.flipped { transform: rotateY(180deg); }
+    .flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 1.5px solid rgba(212,175,55,0.3); box-shadow: var(--shadow-card); }
+    .flip-front { background: linear-gradient(135deg, #0c1a38 0%, #132240 50%, #0e1e3a 100%); }
+    .flip-front-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5)); }
+    .flip-front-text { font-size: 0.85rem; color: var(--gold-pale); opacity: 0.65; letter-spacing: 0.08em; text-align: center; padding: 0 20px; }
+    .flip-back { background: linear-gradient(135deg, #0f2044 0%, #1a3060 100%); transform: rotateY(180deg); }
+    .flip-back.impostor-card { background: linear-gradient(135deg, #2d0a08 0%, #4a1010 100%); border-color: rgba(231,76,60,0.5); }
+    .flip-back.impostor-card .flip-word { color: var(--red-bright); text-shadow: 0 0 20px rgba(231,76,60,0.6); }
+    .flip-word { font-size: clamp(1.6rem, 6vw, 2.4rem); color: var(--gold-light); text-align: center; text-shadow: 0 0 20px rgba(240,200,85,0.6); font-weight: 700; padding: 0 16px; line-height: 1.2; }
+    .flip-hint { font-size: 0.78rem; color: var(--gold-pale); opacity: 0.55; font-style: italic; text-align: center; padding: 0 20px; }
+    .pulse-ring { position: absolute; inset: -4px; border-radius: calc(var(--radius) + 4px); border: 2px solid var(--gold); opacity: 0; pointer-events: none; }
+    .flip-card-wrap:hover .pulse-ring { animation: pulseRing 1.5s ease infinite; }
+    @keyframes pulseRing { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); } }
+    .ready-btn-wrap { text-align: center; }
+
+    #screen-discussion { justify-content: center; gap: 20px; text-align: center; }
+    .discuss-flame { font-size: 3rem; animation: flameBounce 1.2s ease-in-out infinite; filter: drop-shadow(0 0 15px rgba(240,200,85,0.7)); }
+    @keyframes flameBounce { 0%,100% { transform: scale(1) rotate(-3deg); } 50% { transform: scale(1.1) rotate(3deg); } }
+    .discuss-title { font-size: clamp(1.8rem, 7vw, 2.8rem); color: var(--gold-light); text-shadow: 0 0 30px rgba(240,200,85,0.5); line-height: 1.1; }
+    .discuss-sub { font-size: 0.9rem; color: var(--gold-pale); opacity: 0.65; max-width: 320px; line-height: 1.5; }
+    .timer-display { font-size: clamp(3rem, 14vw, 5rem); font-weight: 700; color: var(--gold-light); letter-spacing: 0.05em; text-shadow: 0 0 30px rgba(240,200,85,0.5); font-variant-numeric: tabular-nums; min-width: 150px; text-align: center; }
+    .timer-display.urgent { color: var(--red-bright); text-shadow: 0 0 30px rgba(231,76,60,0.6); animation: timerUrgent 0.5s ease infinite; }
+    @keyframes timerUrgent { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .timer-controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .timer-preset { padding: 8px 16px; background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 50px; color: var(--gold); font-family: inherit; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+    .timer-preset:hover, .timer-preset.active { background: rgba(212,175,55,0.25); border-color: var(--gold); }
+    .players-discuss-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 400px; }
+    .player-chip { padding: 6px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,55,0.15); border-radius: 50px; font-size: 0.82rem; color: var(--gold-pale); }
+
+    #screen-results { justify-content: center; gap: 20px; text-align: center; }
+    .result-reveal-card { width: min(340px, 92vw); border-radius: var(--radius); padding: 32px 24px; text-align: center; position: relative; overflow: hidden; }
+    .result-reveal-card.revealed-impostor { background: linear-gradient(135deg, #2d0a08 0%, #4a1010 80%, #2d0a08 100%); border: 1.5px solid rgba(231,76,60,0.5); box-shadow: 0 0 40px rgba(192,57,43,0.4), var(--shadow-card); animation: impostorReveal 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes impostorReveal { from { transform: scale(0.7) rotateZ(-5deg); opacity: 0; } to { transform: scale(1) rotateZ(0); opacity: 1; } }
+    .result-reveal-card .shimmer { position: absolute; inset: 0; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%); animation: shimmer 2s ease infinite; }
+    @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+    .result-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+    .result-impostor-name { font-size: clamp(1.8rem, 7vw, 2.8rem); font-weight: 700; color: var(--red-bright); text-shadow: 0 0 20px rgba(231,76,60,0.6); margin-bottom: 6px; }
+    .result-role { font-size: 0.85rem; color: var(--gold-pale); opacity: 0.65; margin-bottom: 16px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .result-word-reveal { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); border-radius: 50px; padding: 8px 20px; font-size: 0.9rem; color: var(--gold-pale); }
+    .result-word-reveal strong { color: var(--gold-light); }
+    .mystery-card { width: min(340px, 92vw); border-radius: var(--radius); padding: 40px 24px; background: linear-gradient(135deg, #0c1a38, #132240); border: 1.5px solid rgba(212,175,55,0.25); box-shadow: var(--shadow-card); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .mystery-card:hover { transform: scale(1.02); box-shadow: 0 12px 50px rgba(212,175,55,0.2); }
+    .mystery-card:active { transform: scale(0.98); }
+    .mystery-icon { font-size: 3.5rem; display: block; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(212,175,55,0.5)); animation: mysteryPulse 2s ease-in-out infinite; }
+    @keyframes mysteryPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .mystery-text { font-size: 1rem; color: var(--gold); letter-spacing: 0.05em; }
+    .mystery-sub { font-size: 0.78rem; color: var(--gold-pale); opacity: 0.5; margin-top: 4px; }
+    .all-revealed-list { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; }
+    .revealed-player-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 50px; animation: slideIn 0.3s ease; }
+    .revealed-player-item.is-impostor { background: rgba(192,57,43,0.15); border: 1px solid rgba(231,76,60,0.3); }
+    .revealed-player-item.is-safe { background: rgba(39,174,96,0.08); border: 1px solid rgba(39,174,96,0.2); }
+    .rp-icon { font-size: 1.2rem; }
+    .rp-name { flex: 1; font-size: 0.95rem; color: var(--gold-pale); }
+    .rp-badge { font-size: 0.72rem; padding: 3px 10px; border-radius: 50px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .rp-badge.impostor { background: rgba(231,76,60,0.25); color: var(--red-bright); border: 1px solid rgba(231,76,60,0.4); }
+    .rp-badge.safe { background: rgba(39,174,96,0.15); color: #2ecc71; border: 1px solid rgba(39,174,96,0.3); }
+
+    /* used-words counter badge */
+    .used-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); border-radius: 50px; padding: 4px 12px; font-size: 0.72rem; color: var(--gold); opacity: 0.7; }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-sheet { background: var(--navy-mid); border: 1px solid rgba(212,175,55,0.25); border-radius: 24px 24px 0 0; width: 100%; max-width: 600px; padding: 24px 24px 40px; transform: translateY(40px); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); max-height: 85vh; overflow-y: auto; }
+    .modal-sheet::-webkit-scrollbar { display: none; }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle { width: 40px; height: 4px; background: rgba(212,175,55,0.3); border-radius: 2px; margin: 0 auto 20px; }
+    .modal-title { font-size: 1.3rem; color: var(--gold-light); margin-bottom: 16px; }
+    .how-step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+    .step-num { width: 32px; height: 32px; background: linear-gradient(135deg, var(--gold-dim), var(--gold)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #0a1628; flex-shrink: 0; }
+    .step-text { font-size: 0.9rem; color: var(--gold-pale); opacity: 0.8; line-height: 1.5; }
+    .step-text strong { color: var(--gold-light); opacity: 1; }
+
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(12,26,56,0.97); border: 1px solid rgba(212,175,55,0.4); border-radius: 50px; padding: 10px 24px; font-size: 0.85rem; color: var(--gold-pale); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; backdrop-filter: blur(10px); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .back-btn { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,55,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--gold); font-size: 1.2rem; transition: all 0.2s; z-index: 5; }
+    .back-btn:hover { background: rgba(212,175,55,0.1); }
+
+    .progress-bar-wrap { width: 100%; max-width: 480px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
+
+    .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+    .confetti-piece { position: absolute; width: 8px; height: 8px; opacity: 0; }
+    @keyframes confettiFall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+    .hidden { display: none !important; }
+    @media (min-width: 600px) { .screen { padding: 30px 24px 60px; } .flip-card-wrap { width: 360px; height: 220px; } }
+    @media (min-width: 900px) { .screen { padding: 40px 32px 80px; } }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas-bg"></canvas>
+<div class="confetti-wrap" id="confetti-wrap"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ===================== HOW TO PLAY MODAL ===================== -->
+<div class="modal-overlay" id="modal-how">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✝️ ¿Cómo se juega?</div>
+    <div class="how-step">
+      <div class="step-num">1</div>
+      <div class="step-text">Todos los jugadores <strong>ingresan su nombre</strong> en la aplicación. Se necesitan mínimo 3 personas.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">2</div>
+      <div class="step-text">La app asigna en secreto <strong>la misma palabra bíblica</strong> a todos... excepto a <strong>uno: el Impostor</strong>, quien recibe la palabra "IMPOSTOR" y una <strong>pista secreta</strong> para ayudarle a camuflarse.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">3</div>
+      <div class="step-text">Cada jugador <strong>toma el teléfono en privado</strong>, toca la carta para ver su palabra y luego la oculta antes de pasarlo.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">4</div>
+      <div class="step-text">Todos <strong>debaten y dan pistas</strong> sobre su palabra sin revelarla directamente. El impostor debe sobrevivir sin ser descubierto.</div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">5</div>
+      <div class="step-text">El grupo <strong>vota</strong> quién creen que es el impostor. Al final, se revela la verdad.</div>
+    </div>
+    <div class="divider-gold" style="margin: 20px 0 16px;"></div>
+    <div style="font-size:0.82rem; color:var(--gold-pale); opacity:0.55; line-height:1.6; font-style:italic;">
+      "Amados, no creáis a todo espíritu, sino probad los espíritus si son de Dios" — 1 Juan 4:1
+    </div>
+    <div style="margin-top:20px; text-align:center;">
+      <button class="btn btn-primary btn-sm" onclick="closeModal()">¡Entendido!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SCREEN: HOME ===================== -->
+<div id="screen-home" class="screen active">
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; text-align:center; width:100%;">
+    <div class="home-logo">
+      <svg class="logo-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(212,175,55,0.15)" stroke-width="1"/>
+        <circle cx="60" cy="60" r="45" fill="rgba(12,26,56,0.8)" stroke="rgba(212,175,55,0.3)" stroke-width="1.5"/>
+        <rect x="56" y="22" width="8" height="55" rx="4" fill="url(#goldGrad)"/>
+        <rect x="34" y="36" width="52" height="8" rx="4" fill="url(#goldGrad)"/>
+        <ellipse cx="60" cy="82" rx="14" ry="9" fill="none" stroke="rgba(212,175,55,0.5)" stroke-width="1.5"/>
+        <circle cx="60" cy="82" r="5" fill="url(#goldGrad)"/>
+        <circle cx="62" cy="80" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <defs>
+          <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#f0c855"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <h1 class="home-title">DISCERNIMIENTO</h1>
+    <p class="home-subtitle">El Juego Bíblico</p>
+    <p class="home-verse" id="home-verse"></p>
+    <div style="display:flex; flex-direction:column; gap:12px; align-items:center; margin-bottom:32px;">
+      <button class="btn btn-primary" onclick="showScreen('screen-players')">✝ Comenzar Partida</button>
+      <button class="btn btn-ghost" onclick="openModal()">¿Cómo se juega?</button>
+    </div>
+    <div class="divider-gold"></div>
+    <div class="home-credits" style="margin-top:12px;">
+      <span>Creado por <strong style="color:var(--gold);opacity:0.8;">Matías Vindas Cerdas</strong></span>
+      <span>Iglesia Morada de Dios</span>
+      <span>Red Juvenil Villa Ligia <strong style="color:var(--gold);opacity:0.7;">E.C.O</strong></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SCREEN: ADD PLAYERS ===================== -->
+<div id="screen-players" class="screen">
+  <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+  <div class="section-header" style="margin-top:40px;">
+    <span class="section-icon">👥</span>
+    <h2 class="section-title">Jugadores</h2>
+    <p class="section-sub">Agrega a todos los participantes</p>
+  </div>
+  <div class="player-input-row">
+    <input class="input-field" id="player-input" type="text" placeholder="Nombre del jugador..." maxlength="24" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') addPlayer()">
+    <button class="btn btn-icon" onclick="addPlayer()">＋</button>
+  </div>
+  <div class="player-count-badge" id="player-count-badge">
+    <span>⚡</span>
+    <span id="player-count-text">0 jugadores</span>
+  </div>
+  <div class="players-list" id="players-list"></div>
+  <p class="min-note">Mínimo 3 jugadores para comenzar</p>
+  <div class="actions-row">
+    <button class="btn btn-primary" id="btn-to-settings" onclick="showScreen('screen-settings')" disabled>Continuar →</button>
+  </div>
+</div>
+
+<!-- ===================== SCREEN: SETTINGS ===================== -->
+<div id="screen-settings" class="screen">
+  <button class="back-btn" onclick="showScreen('screen-players')">←</button>
+  <div class="section-header" style="margin-top:40px;">
+    <span class="section-icon">⚙️</span>
+    <h2 class="section-title">Configuración</h2>
+    <p class="section-sub">Personaliza la partida</p>
+  </div>
+  <div class="settings-block">
+    <span class="settings-label">Opciones</span>
+    <div class="card card-glow" style="padding:0; overflow:hidden;">
+      <div class="toggle-row" style="border-bottom:1px solid rgba(212,175,55,0.1);">
+        <div>
+          <div class="toggle-label">💡 Pista al Impostor</div>
+          <div class="toggle-desc">El impostor recibe una pista de la palabra</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-hint" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">⏱️ Temporizador</div>
+          <div class="toggle-desc">Usar cronómetro en el debate</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-timer" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+  </div>
+  <div class="settings-block">
+    <span class="settings-label">Categoría de Palabras</span>
+    <div class="category-grid" id="category-grid">
+      <button class="cat-btn cat-btn-all selected" data-cat="all" onclick="selectCat(this)"><span class="cat-icon">✨</span>Todas las categorías</button>
+      <button class="cat-btn" data-cat="Personajes" onclick="selectCat(this)"><span class="cat-icon">👤</span>Personajes Bíblicos</button>
+      <button class="cat-btn" data-cat="Lugares" onclick="selectCat(this)"><span class="cat-icon">🗺️</span>Lugares Bíblicos</button>
+      <button class="cat-btn" data-cat="Objetos" onclick="selectCat(this)"><span class="cat-icon">📜</span>Objetos Sagrados</button>
+      <button class="cat-btn" data-cat="Espiritual" onclick="selectCat(this)"><span class="cat-icon">🕊️</span>Conceptos Espirituales</button>
+      <button class="cat-btn" data-cat="Milagros" onclick="selectCat(this)"><span class="cat-icon">⚡</span>Milagros</button>
+      <button class="cat-btn" data-cat="Ministerio" onclick="selectCat(this)"><span class="cat-icon">⛪</span>Ministerio</button>
+    </div>
+  </div>
+  <!-- Used words indicator -->
+  <div class="settings-block" style="text-align:center;">
+    <span class="used-badge" id="used-words-badge">🎲 0 palabras ya usadas esta sesión</span>
+    <div style="margin-top:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="resetUsedWords()">↺ Reiniciar palabras usadas</button>
+    </div>
+  </div>
+  <div class="actions-row" style="max-width:480px; width:100%;">
+    <button class="btn btn-primary" onclick="startGame()">🕊️ ¡Iniciar Juego!</button>
+  </div>
+</div>
+
+<!-- ===================== SCREEN: WORD REVEAL ===================== -->
+<div id="screen-reveal" class="screen">
+  <div class="reveal-progress" id="reveal-progress">Jugador 1 de 1</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="reveal-progress-bar" style="width:0%"></div>
+  </div>
+  <p class="reveal-instruction">Solo tú puedes ver tu pantalla 👀</p>
+  <div class="reveal-player-name" id="reveal-player-name">Nombre</div>
+  <div class="flip-card-wrap" id="flip-card-wrap" onclick="flipCard()">
+    <div class="pulse-ring" id="pulse-ring"></div>
+    <div class="flip-card" id="flip-card">
+      <div class="flip-front" id="flip-front">
+        <span class="flip-front-icon">✝️</span>
+        <span class="flip-front-text">Toca para revelar<br>tu palabra</span>
+      </div>
+      <div class="flip-back" id="flip-back">
+        <span class="flip-word" id="flip-word">Palabra</span>
+        <span class="flip-hint" id="flip-hint"></span>
+      </div>
+    </div>
+  </div>
+  <div class="ready-btn-wrap">
+    <button class="btn btn-secondary" id="btn-next-player" onclick="nextPlayer()" style="display:none;">Listo, pasar →</button>
+  </div>
+  <p style="font-size:0.75rem;color:var(--gold-pale);opacity:0.4;text-align:center;max-width:280px;">
+    Toca la carta para ver tu palabra · Tócala de nuevo para ocultarla
+  </p>
+</div>
+
+<!-- ===================== SCREEN: DISCUSSION ===================== -->
+<div id="screen-discussion" class="screen">
+  <div class="discuss-flame">🔥</div>
+  <h2 class="discuss-title">¡A Discernir!</h2>
+  <p class="discuss-sub">Hablen sobre su palabra sin revelarla.<br><strong style="color:var(--gold);">¿Quién es el Impostor?</strong></p>
+  <div class="timer-display" id="timer-display" style="display:none;">3:00</div>
+  <div class="timer-controls" id="timer-controls" style="display:none;">
+    <button class="timer-preset active" data-seconds="60" onclick="setTimer(60,this)">1 min</button>
+    <button class="timer-preset" data-seconds="90" onclick="setTimer(90,this)">1:30</button>
+    <button class="timer-preset" data-seconds="120" onclick="setTimer(120,this)">2 min</button>
+    <button class="timer-preset" data-seconds="180" onclick="setTimer(180,this)">3 min</button>
+    <button class="timer-preset" data-seconds="0" onclick="setTimer(0,this)" id="timer-start-stop">▶ Iniciar</button>
+  </div>
+  <div style="width:100%;max-width:480px;">
+    <div class="settings-label" style="text-align:center; margin-bottom:10px;">Jugadores en partida</div>
+    <div class="players-discuss-list" id="players-discuss-list"></div>
+  </div>
+  <button class="btn btn-primary" onclick="showScreen('screen-results')">⚖️ Revelar Impostor</button>
+  <button class="btn btn-ghost" onclick="showScreen('screen-reveal'); resetReveal()">← Volver a palabras</button>
+</div>
+
+<!-- ===================== SCREEN: RESULTS ===================== -->
+<div id="screen-results" class="screen">
+  <div class="section-header" style="margin-top:16px;">
+    <h2 class="section-title" style="color:var(--gold-pale);">El Veredicto</h2>
+    <p class="section-sub">¿Quién fue el que mintió?</p>
+  </div>
+  <div class="mystery-card" id="mystery-card" onclick="revealImpostor()">
+    <span class="mystery-icon">🔍</span>
+    <div class="mystery-text">Toca para revelar</div>
+    <div class="mystery-sub">¿Quién fue el Impostor?</div>
+  </div>
+  <div class="result-reveal-card hidden" id="result-card">
+    <div class="shimmer"></div>
+    <span class="result-emoji" id="result-emoji">😱</span>
+    <div id="result-name" class="result-impostor-name">Nombre</div>
+    <div class="result-role" id="result-role">ERA EL IMPOSTOR</div>
+    <div class="result-word-reveal" id="result-word-wrap">La palabra era: <strong id="result-word">—</strong></div>
+  </div>
+  <div class="all-revealed-list hidden" id="all-revealed-list"></div>
+  <div class="actions-row" id="result-actions" style="max-width:480px; width:100%; display:none;">
+    <button class="btn btn-primary" onclick="playAgainSameTeam()">🔄 Misma Ronda</button>
+    <button class="btn btn-secondary" onclick="playAgainNewGame()">✨ Nueva Partida</button>
+  </div>
+</div>
+
+<script>
+// ==================== WORD DATABASE (ampliada) ====================
+const WORDS = [
+  // ── Personajes ──
+  { word: "Moisés",              category: "Personajes", hint: "Desierto" },
+  { word: "Abraham",             category: "Personajes", hint: "Estrellas" },
+  { word: "David",               category: "Personajes", hint: "Arpa" },
+  { word: "Salomón",             category: "Personajes", hint: "Templo" },
+  { word: "Pablo",               category: "Personajes", hint: "Damasco" },
+  { word: "Pedro",               category: "Personajes", hint: "Roca" },
+  { word: "María",               category: "Personajes", hint: "Lirio" },
+  { word: "Noé",                 category: "Personajes", hint: "Paloma" },
+  { word: "Elías",               category: "Personajes", hint: "Lluvia" },
+  { word: "Daniel",              category: "Personajes", hint: "Foso" },
+  { word: "Josué",               category: "Personajes", hint: "Trompetas" },
+  { word: "Rut",                 category: "Personajes", hint: "Espiga" },
+  { word: "Ester",               category: "Personajes", hint: "Banquete" },
+  { word: "Job",                 category: "Personajes", hint: "Ceniza" },
+  { word: "Jonás",               category: "Personajes", hint: "Tormenta" },
+  { word: "Sansón",              category: "Personajes", hint: "Columnas" },
+  { word: "Goliat",              category: "Personajes", hint: "Piedra" },
+  { word: "Tomás",               category: "Personajes", hint: "Herida" },
+  { word: "Lázaro",              category: "Personajes", hint: "Vendas" },
+  { word: "Juan el Bautista",    category: "Personajes", hint: "Miel" },
+  { word: "María Magdalena",     category: "Personajes", hint: "Ungüento" },
+  { word: "Débora",              category: "Personajes", hint: "Palma" },
+  { word: "Isaías",              category: "Personajes", hint: "Carbón" },
+  { word: "Jeremías",            category: "Personajes", hint: "Lágrimas" },
+  { word: "Ezequiel",            category: "Personajes", hint: "Huesos" },
+  { word: "Rahab",               category: "Personajes", hint: "Hilo" },
+  { word: "Gedeón",              category: "Personajes", hint: "Cántaro" },
+  { word: "Esteban",             category: "Personajes", hint: "Piedras" },
+  { word: "Felipe",              category: "Personajes", hint: "Carro" },
+  { word: "Caleb",               category: "Personajes", hint: "Uva" },
+  { word: "Noemí",               category: "Personajes", hint: "Amargura" },
+  { word: "Ananías",             category: "Personajes", hint: "Ceguera" },
+  { word: "Bernabé",             category: "Personajes", hint: "Chipre" },
+  { word: "Timoteo",             category: "Personajes", hint: "Éfeso" },
+  { word: "Zaqueo",              category: "Personajes", hint: "Sicómoro" },
+  { word: "Bartimeo",            category: "Personajes", hint: "Manto" },
+  { word: "Nicodemo",            category: "Personajes", hint: "Noche" },
+  { word: "Simón el Cireneo",    category: "Personajes", hint: "Carga" },
+  { word: "Adán",                category: "Personajes", hint: "Barro" },
+  { word: "Eva",                 category: "Personajes", hint: "Costilla" },
+  { word: "Caín",                category: "Personajes", hint: "Marca" },
+  { word: "Abel",                category: "Personajes", hint: "Rebaño" },
+  { word: "Isaac",               category: "Personajes", hint: "Altar" },
+  { word: "Jacob",               category: "Personajes", hint: "Escalera" },
+  { word: "José",                category: "Personajes", hint: "Sueño" },
+  { word: "Aarón",               category: "Personajes", hint: "Vara" },
+  { word: "Josefat",             category: "Personajes", hint: "Batalla" },
+  { word: "Ezequías",            category: "Personajes", hint: "Reloj" },
+  { word: "Manasés",             category: "Personajes", hint: "Cadenas" },
+  { word: "Eliseo",              category: "Personajes", hint: "Manto" },
+  { word: "Amós",                category: "Personajes", hint: "Plomada" },
+  { word: "Oseas",               category: "Personajes", hint: "Esposa" },
+  { word: "Malaquías",           category: "Personajes", hint: "Sol" },
+  { word: "Zacarías",            category: "Personajes", hint: "Visión" },
+  { word: "Nehemías",            category: "Personajes", hint: "Muro" },
+  { word: "Esdras",              category: "Personajes", hint: "Ley" },
+  { word: "Salomé",              category: "Personajes", hint: "Danza" },
+  { word: "Lidia",               category: "Personajes", hint: "Púrpura" },
+  { word: "Priscila",            category: "Personajes", hint: "Tienda" },
+  { word: "Aquila",              category: "Personajes", hint: "Tejedor" },
+  { word: "Silas",               category: "Personajes", hint: "Cárcel" },
+  { word: "Cornelio",            category: "Personajes", hint: "Centurión" },
+
+  // ── Lugares ──
+  { word: "Jerusalén",           category: "Lugares", hint: "Muro" },
+  { word: "Belén",               category: "Lugares", hint: "Pesebre" },
+  { word: "Nazaret",             category: "Lugares", hint: "Carpintero" },
+  { word: "Egipto",              category: "Lugares", hint: "Pirámide" },
+  { word: "Babilonia",           category: "Lugares", hint: "Torre" },
+  { word: "Río Jordán",          category: "Lugares", hint: "Corriente" },
+  { word: "Getsemaní",           category: "Lugares", hint: "Olivos" },
+  { word: "Gólgota",             category: "Lugares", hint: "Calavera" },
+  { word: "Monte Sinaí",         category: "Lugares", hint: "Tablas" },
+  { word: "Mar de Galilea",      category: "Lugares", hint: "Tormenta" },
+  { word: "Jericó",              category: "Lugares", hint: "Palmeras" },
+  { word: "Samaria",             category: "Lugares", hint: "Pozo" },
+  { word: "Patmos",              category: "Lugares", hint: "Isla" },
+  { word: "Antioquía",           category: "Lugares", hint: "Nombre" },
+  { word: "Corinto",             category: "Lugares", hint: "Puerto" },
+  { word: "Éfeso",               category: "Lugares", hint: "Diana" },
+  { word: "Canaán",              category: "Lugares", hint: "Leche" },
+  { word: "Nínive",              category: "Lugares", hint: "Cilicio" },
+  { word: "Monte Carmelo",       category: "Lugares", hint: "Lluvia" },
+  { word: "Desierto del Sinaí",  category: "Lugares", hint: "Arena" },
+  { word: "Mar Rojo",            category: "Lugares", hint: "Fondo" },
+  { word: "Camino de Emaús",     category: "Lugares", hint: "Fracción" },
+  { word: "Sala Superior",       category: "Lugares", hint: "Lenguas" },
+  { word: "Jardín del Edén",     category: "Lugares", hint: "Serpiente" },
+  { word: "Ur de los Caldeos",   category: "Lugares", hint: "Partida" },
+  { word: "Hebrón",              category: "Lugares", hint: "Cueva" },
+  { word: "Silo",                category: "Lugares", hint: "Arca" },
+  { word: "Betel",               category: "Lugares", hint: "Piedra" },
+  { word: "Capernaúm",           category: "Lugares", hint: "Centurión" },
+  { word: "Tiro y Sidón",        category: "Lugares", hint: "Fenicia" },
+  { word: "Atenas",              category: "Lugares", hint: "Areópago" },
+  { word: "Roma",                category: "Lugares", hint: "César" },
+  { word: "Tesalónica",          category: "Lugares", hint: "Carta" },
+  { word: "Filipos",             category: "Lugares", hint: "Cárcel" },
+  { word: "Monte de los Olivos", category: "Lugares", hint: "Ascensión" },
+  { word: "Monte Horeb",         category: "Lugares", hint: "Cueva" },
+  { word: "Puerta Hermosa",      category: "Lugares", hint: "Cojo" },
+  { word: "Bet-El",              category: "Lugares", hint: "Sueño" },
+  { word: "Cesarea de Filipo",   category: "Lugares", hint: "Confesión" },
+
+  // ── Objetos ──
+  { word: "Arca de Noé",         category: "Objetos", hint: "Madera" },
+  { word: "Arca del Pacto",      category: "Objetos", hint: "Querubines" },
+  { word: "Vara de Moisés",      category: "Objetos", hint: "Serpiente" },
+  { word: "Honda de David",      category: "Objetos", hint: "Cuero" },
+  { word: "Tabernáculo",         category: "Objetos", hint: "Velo" },
+  { word: "Menorá",              category: "Objetos", hint: "Aceite" },
+  { word: "Shofar",              category: "Objetos", hint: "Cuerno" },
+  { word: "Túnica de José",      category: "Objetos", hint: "Colores" },
+  { word: "Corona de espinas",   category: "Objetos", hint: "Sangre" },
+  { word: "Cruz",                category: "Objetos", hint: "Carga" },
+  { word: "Maná",                category: "Objetos", hint: "Rocío" },
+  { word: "Talento",             category: "Objetos", hint: "Tierra" },
+  { word: "Alfarero",            category: "Objetos", hint: "Barro" },
+  { word: "Urim y Tumim",        category: "Objetos", hint: "Pectoral" },
+  { word: "Espada del Espíritu", category: "Objetos", hint: "Armadura" },
+  { word: "Incensario",          category: "Objetos", hint: "Humo" },
+  { word: "Rollo",               category: "Objetos", hint: "Pergamino" },
+  { word: "Paloma",              category: "Objetos", hint: "Rama" },
+  { word: "Arco iris",           category: "Objetos", hint: "Nube" },
+  { word: "Piedra angular",      category: "Objetos", hint: "Desechada" },
+  { word: "Candelabro de oro",   category: "Objetos", hint: "Siete" },
+  { word: "Mesa del pan",        category: "Objetos", hint: "Presencia" },
+  { word: "Altar de bronce",     category: "Objetos", hint: "Fuego" },
+  { word: "Fuente de bronce",    category: "Objetos", hint: "Lavarse" },
+  { word: "Cortina del templo",  category: "Objetos", hint: "Rasgada" },
+  { word: "Lanza de Longino",    category: "Objetos", hint: "Costado" },
+  { word: "Cáliz",               category: "Objetos", hint: "Sangre" },
+  { word: "Sudario",             category: "Objetos", hint: "Tumba" },
+  { word: "Sandalia",            category: "Objetos", hint: "Desatar" },
+  { word: "Manto de Elías",      category: "Objetos", hint: "Doble" },
+  { word: "Las doce piedras",    category: "Objetos", hint: "Jordán" },
+  { word: "Tablillas de piedra", category: "Objetos", hint: "Diez" },
+
+  // ── Espiritual ──
+  { word: "Gracia",              category: "Espiritual", hint: "Inmerecida" },
+  { word: "Fe",                  category: "Espiritual", hint: "Certeza" },
+  { word: "Esperanza",           category: "Espiritual", hint: "Ancla" },
+  { word: "Amor",                category: "Espiritual", hint: "Paciencia" },
+  { word: "Perdón",              category: "Espiritual", hint: "Deuda" },
+  { word: "Oración",             category: "Espiritual", hint: "Cámara" },
+  { word: "Ayuno",               category: "Espiritual", hint: "Velo" },
+  { word: "Bautismo",            category: "Espiritual", hint: "Inmersión" },
+  { word: "Santa Cena",          category: "Espiritual", hint: "Copa" },
+  { word: "Alabanza",            category: "Espiritual", hint: "Canto" },
+  { word: "Adoración",           category: "Espiritual", hint: "Postración" },
+  { word: "Santificación",       category: "Espiritual", hint: "Proceso" },
+  { word: "Redención",           category: "Espiritual", hint: "Precio" },
+  { word: "Salvación",           category: "Espiritual", hint: "Regalo" },
+  { word: "Arrepentimiento",     category: "Espiritual", hint: "Giro" },
+  { word: "Discernimiento",      category: "Espiritual", hint: "Prueba" },
+  { word: "Profecía",            category: "Espiritual", hint: "Revelación" },
+  { word: "Intercesión",         category: "Espiritual", hint: "Brecha" },
+  { word: "Evangelio",           category: "Espiritual", hint: "Noticia" },
+  { word: "Pacto",               category: "Espiritual", hint: "Sello" },
+  { word: "Trinidad",            category: "Espiritual", hint: "Tres" },
+  { word: "Misericordia",        category: "Espiritual", hint: "Llanto" },
+  { word: "Santidad",            category: "Espiritual", hint: "Separación" },
+  { word: "Reconciliación",      category: "Espiritual", hint: "Abrazo" },
+  { word: "Justificación",       category: "Espiritual", hint: "Juicio" },
+  { word: "Resurrección",        category: "Espiritual", hint: "Lienzo" },
+  { word: "Pentecostés",         category: "Espiritual", hint: "Viento" },
+  { word: "Segunda venida",      category: "Espiritual", hint: "Nubes" },
+  { word: "Temor de Dios",       category: "Espiritual", hint: "Sabiduría" },
+  { word: "Humildad",            category: "Espiritual", hint: "Polvo" },
+  { word: "Obediencia",          category: "Espiritual", hint: "Mandato" },
+  { word: "Soberanía",           category: "Espiritual", hint: "Trono" },
+  { word: "Omnisciencia",        category: "Espiritual", hint: "Todo sabe" },
+  { word: "Omnipresencia",       category: "Espiritual", hint: "Siempre" },
+  { word: "Omnipotencia",        category: "Espiritual", hint: "Todopoderoso" },
+  { word: "Encarnación",         category: "Espiritual", hint: "Carne" },
+  { word: "Expiación",           category: "Espiritual", hint: "Cubrir" },
+  { word: "Propiciación",        category: "Espiritual", hint: "Ira" },
+  { word: "Glorificación",       category: "Espiritual", hint: "Final" },
+  { word: "Adopción",            category: "Espiritual", hint: "Hijos" },
+  { word: "Regeneración",        category: "Espiritual", hint: "Nuevo" },
+  { word: "Iluminación",         category: "Espiritual", hint: "Entendimiento" },
+  { word: "Convicción",          category: "Espiritual", hint: "Espíritu" },
+  { word: "Separación",          category: "Espiritual", hint: "Mundo" },
+
+  // ── Milagros ──
+  { word: "División del Mar Rojo",           category: "Milagros", hint: "Murallas" },
+  { word: "Multiplicación de panes",         category: "Milagros", hint: "Canastas" },
+  { word: "Resurrección de Lázaro",          category: "Milagros", hint: "Cuatro" },
+  { word: "Agua convertida en vino",         category: "Milagros", hint: "Tinaja" },
+  { word: "Zarza ardiente",                  category: "Milagros", hint: "Descalzo" },
+  { word: "Caminar sobre el agua",           category: "Milagros", hint: "Olas" },
+  { word: "Apertura de la cárcel",           category: "Milagros", hint: "Terremoto" },
+  { word: "Sanidad del ciego de nacimiento", category: "Milagros", hint: "Lodo" },
+  { word: "Pesca milagrosa",                 category: "Milagros", hint: "Red" },
+  { word: "Transfiguración",                 category: "Milagros", hint: "Resplandor" },
+  { word: "Plagas de Egipto",                category: "Milagros", hint: "Ranas" },
+  { word: "Maná del cielo",                  category: "Milagros", hint: "Mañana" },
+  { word: "Detención del sol",               category: "Milagros", hint: "Batalla" },
+  { word: "Resurrección de Jesús",           category: "Milagros", hint: "Lienzo" },
+  { word: "Nacimiento virginal",             category: "Milagros", hint: "Sombra" },
+  { word: "Agua de la roca",                 category: "Milagros", hint: "Vara" },
+  { word: "Fuego de Elías",                  category: "Milagros", hint: "Altar" },
+  { word: "Curación del leproso",            category: "Milagros", hint: "Naaman" },
+  { word: "Aceite de la viuda",              category: "Milagros", hint: "Vasijas" },
+  { word: "Liberación de los tres jóvenes",  category: "Milagros", hint: "Horno" },
+  { word: "Columna de fuego",                category: "Milagros", hint: "Noche" },
+  { word: "Columna de nube",                 category: "Milagros", hint: "Día" },
+  { word: "Alimentación de Elías",           category: "Milagros", hint: "Cuervo" },
+  { word: "Resurrección hijo de Sunamita",   category: "Milagros", hint: "Vara" },
+  { word: "Curación paralítico",             category: "Milagros", hint: "Camilla" },
+  { word: "Pesca del estatero",              category: "Milagros", hint: "Moneda" },
+  { word: "Higuera seca",                    category: "Milagros", hint: "Raíz" },
+  { word: "Sanidad oreja de Malco",          category: "Milagros", hint: "Espada" },
+
+  // ── Ministerio ──
+  { word: "Discipulado",          category: "Ministerio", hint: "Maestro" },
+  { word: "Misión",               category: "Ministerio", hint: "Mundo" },
+  { word: "Testimonio",           category: "Ministerio", hint: "Vida" },
+  { word: "Predicación",          category: "Ministerio", hint: "Púlpito" },
+  { word: "Diezmo",               category: "Ministerio", hint: "Décima" },
+  { word: "Ofrenda",              category: "Ministerio", hint: "Voluntad" },
+  { word: "Unción",               category: "Ministerio", hint: "Aceite" },
+  { word: "Células",              category: "Ministerio", hint: "Hogar" },
+  { word: "Servicio",             category: "Ministerio", hint: "Toalla" },
+  { word: "Mayordomía",           category: "Ministerio", hint: "Talento" },
+  { word: "Imposición de manos",  category: "Ministerio", hint: "Cabeza" },
+  { word: "Comunión",             category: "Ministerio", hint: "Hermandad" },
+  { word: "Apostolado",           category: "Ministerio", hint: "Enviado" },
+  { word: "Evangelismo",          category: "Ministerio", hint: "Buenas nuevas" },
+  { word: "Pastorado",            category: "Ministerio", hint: "Rebaño" },
+  { word: "Profetismo",           category: "Ministerio", hint: "Fortalecer" },
+  { word: "Enseñanza",            category: "Ministerio", hint: "Doctrina" },
+  { word: "Diaconado",            category: "Ministerio", hint: "Mesas" },
+  { word: "Liderazgo siervo",     category: "Ministerio", hint: "Toalla" },
+  { word: "Plantación de iglesias", category: "Ministerio", hint: "Semilla" },
+  { word: "Consejería bíblica",   category: "Ministerio", hint: "Restaurar" },
+  { word: "Adoración corporativa", category: "Ministerio", hint: "Juntos" },
+  { word: "Retiro espiritual",    category: "Ministerio", hint: "Desierto" },
+  { word: "Campamento juvenil",   category: "Ministerio", hint: "Fogata" },
+  { word: "Misiones transculturales", category: "Ministerio", hint: "Naciones" },
+  { word: "Escuela dominical",    category: "Ministerio", hint: "Niños" },
+  { word: "Grupo de oración",     category: "Ministerio", hint: "Acuerdo" },
+  { word: "Estudio bíblico",      category: "Ministerio", hint: "Lámpara" },
+];
+
+// ==================== VERSE DATABASE (ampliada) ====================
+const VERSES = [
+  { text: "Probad los espíritus si son de Dios", ref: "1 Juan 4:1" },
+  { text: "La palabra de Dios es viva y eficaz, y más cortante que toda espada de dos filos", ref: "Hebreos 4:12" },
+  { text: "Porque Dios no nos ha dado un espíritu de cobardía, sino de poder, de amor y de dominio propio", ref: "2 Timoteo 1:7" },
+  { text: "Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia", ref: "Proverbios 3:5" },
+  { text: "El que tiene oídos para oír, oiga", ref: "Mateo 11:15" },
+  { text: "Sed sobrios y velad; porque vuestro adversario el diablo, como león rugiente, anda buscando a quien devorar", ref: "1 Pedro 5:8" },
+  { text: "No améis al mundo, ni las cosas que están en el mundo", ref: "1 Juan 2:15" },
+  { text: "Estad firmes y constantes, creciendo en la obra del Señor siempre", ref: "1 Corintios 15:58" },
+  { text: "El corazón del hombre piensa su camino; mas Jehová endereza sus pasos", ref: "Proverbios 16:9" },
+  { text: "No os conforméis a este siglo, sino transformaos por la renovación de vuestro entendimiento", ref: "Romanos 12:2" },
+  { text: "Porque donde esté vuestro tesoro, allí estará también vuestro corazón", ref: "Mateo 6:21" },
+  { text: "Pedid, y se os dará; buscad, y hallaréis; llamad, y se os abrirá", ref: "Mateo 7:7" },
+  { text: "Yo soy el camino, y la verdad, y la vida", ref: "Juan 14:6" },
+  { text: "Y conoceréis la verdad, y la verdad os hará libres", ref: "Juan 8:32" },
+  { text: "Engañoso es el corazón más que todas las cosas, y perverso; ¿quién lo conocerá?", ref: "Jeremías 17:9" },
+  { text: "El que es fiel en lo muy poco, también en lo más es fiel", ref: "Lucas 16:10" },
+  { text: "Escudriñad las Escrituras; porque a vosotros os parece que en ellas tenéis la vida eterna", ref: "Juan 5:39" },
+  { text: "Esta es la victoria que vence al mundo: nuestra fe", ref: "1 Juan 5:4" },
+  { text: "Con toda humildad y mansedumbre, soportándoos con paciencia los unos a los otros en amor", ref: "Efesios 4:2" },
+  { text: "Porque somos hechura suya, creados en Cristo Jesús para buenas obras", ref: "Efesios 2:10" },
+  { text: "Todo lo puedo en Cristo que me fortalece", ref: "Filipenses 4:13" },
+  { text: "¿Con qué limpiará el joven su camino? Con guardar tu palabra", ref: "Salmos 119:9" },
+  { text: "Lámpara es a mis pies tu palabra, y lumbrera a mi camino", ref: "Salmos 119:105" },
+  { text: "Buscad primeramente el reino de Dios y su justicia, y todas estas cosas os serán añadidas", ref: "Mateo 6:33" },
+  { text: "Si alguno quiere venir en pos de mí, niéguese a sí mismo, tome su cruz y sígame", ref: "Mateo 16:24" },
+  { text: "Estad siempre gozosos. Orad sin cesar. Dad gracias en todo", ref: "1 Tesalonicenses 5:16-18" },
+  { text: "No me avergüenzo del evangelio, porque es poder de Dios para salvación", ref: "Romanos 1:16" },
+  { text: "Dios es amor; y el que permanece en amor, permanece en Dios, y Dios en él", ref: "1 Juan 4:16" },
+  { text: "Sean fuertes y valientes. No teman ni se asusten, porque el Señor su Dios va con ellos", ref: "Deuteronomio 31:6" },
+  { text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito", ref: "Juan 3:16" },
+  { text: "El Señor es mi pastor; nada me faltará", ref: "Salmos 23:1" },
+  { text: "Encomienda a Jehová tu camino, y confía en él; y él hará", ref: "Salmos 37:5" },
+  { text: "Ninguna arma forjada contra ti prosperará", ref: "Isaías 54:17" },
+  { text: "Porque yo sé los pensamientos que tengo acerca de vosotros… pensamientos de paz y no de mal", ref: "Jeremías 29:11" },
+  { text: "Mas los que esperan en Jehová tendrán nuevas fuerzas; levantarán alas como las águilas", ref: "Isaías 40:31" },
+  { text: "Porque no nos ha dado Dios espíritu de temor, sino de poder, de amor y de dominio propio", ref: "2 Timoteo 1:7" },
+  { text: "El principio de la sabiduría es el temor de Jehová", ref: "Proverbios 9:10" },
+  { text: "Confía en Jehová, y haz el bien; y de verdad serás alimentado", ref: "Salmos 37:3" },
+  { text: "Y todo lo que pidiereis en oración, creyendo, lo recibiréis", ref: "Mateo 21:22" },
+  { text: "Amémonos unos a otros; porque el amor es de Dios", ref: "1 Juan 4:7" },
+  { text: "Mas yo y mi casa serviremos a Jehová", ref: "Josué 24:15" },
+  { text: "El nombre de Jehová es torre fuerte; a él correrá el justo y será levantado", ref: "Proverbios 18:10" },
+  { text: "Sean gratas las palabras de mi boca y la meditación de mi corazón delante de ti", ref: "Salmos 19:14" },
+  { text: "Crea en mí, oh Dios, un corazón limpio, y renueva un espíritu recto dentro de mí", ref: "Salmos 51:10" },
+  { text: "He aquí yo estoy a la puerta y llamo; si alguno oye mi voz y abre la puerta, entraré a él", ref: "Apocalipsis 3:20" },
+  { text: "El que comenzó en vosotros la buena obra, la perfeccionará hasta el día de Jesucristo", ref: "Filipenses 1:6" },
+  { text: "Así que, si el Hijo os libertare, seréis verdaderamente libres", ref: "Juan 8:36" },
+  { text: "Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar", ref: "Mateo 11:28" },
+  { text: "No hay nada oculto que no haya de ser manifestado; ni escondido que no haya de salir a luz", ref: "Marcos 4:22" },
+  { text: "Porque el Señor corrige al que ama, como el padre al hijo a quien quiere", ref: "Proverbios 3:12" },
+  { text: "Deleítate asimismo en Jehová, y él te concederá las peticiones de tu corazón", ref: "Salmos 37:4" },
+  { text: "Y el Dios de paz os santifique por completo", ref: "1 Tesalonicenses 5:23" },
+  { text: "Echa sobre Jehová tu carga, y él te sustentará; no dejará para siempre caído al justo", ref: "Salmos 55:22" },
+  { text: "Jesús le dijo: Si puedes creer, al que cree todo le es posible", ref: "Marcos 9:23" },
+  { text: "Yo soy la resurrección y la vida; el que cree en mí, aunque esté muerto, vivirá", ref: "Juan 11:25" },
+  { text: "Antes sed los unos con los otros benignos, misericordiosos, perdonándoos como Dios también os perdonó", ref: "Efesios 4:32" },
+  { text: "Glorificad, pues, a Dios en vuestro cuerpo y en vuestro espíritu, los cuales son de Dios", ref: "1 Corintios 6:20" },
+  { text: "Porque la gracia de Dios se ha manifestado para salvación a todos los hombres", ref: "Tito 2:11" },
+  { text: "Vosotros sois la luz del mundo; una ciudad asentada sobre un monte no se puede esconder", ref: "Mateo 5:14" },
+  { text: "Mas la hora viene, y ahora es, cuando los verdaderos adoradores adorarán al Padre en espíritu y en verdad", ref: "Juan 4:23" },
+  { text: "No con ejército, ni con fuerza, sino con mi Espíritu, ha dicho Jehová de los ejércitos", ref: "Zacarías 4:6" },
+  { text: "Si se humillare mi pueblo, sobre el cual mi nombre es invocado, y oraren… yo oiré desde los cielos", ref: "2 Crónicas 7:14" },
+  { text: "El que habita al abrigo del Altísimo morará bajo la sombra del Omnipotente", ref: "Salmos 91:1" },
+  { text: "Yo soy la vid, vosotros los pámpanos; el que permanece en mí y yo en él, éste lleva mucho fruto", ref: "Juan 15:5" },
+  { text: "El fruto del Espíritu es amor, gozo, paz, paciencia, benignidad, bondad, fe", ref: "Gálatas 5:22" },
+  { text: "Joven ¿con qué limpiará el joven su camino? Con guardar tu palabra", ref: "Salmos 119:9" },
+  { text: "Gracia y paz a vosotros, de parte de Dios nuestro Padre y del Señor Jesucristo", ref: "Filipenses 1:2" },
+  { text: "Y este evangelio del reino será predicado en todo el mundo", ref: "Mateo 24:14" },
+  { text: "El temor de Jehová es el principio de la sabiduría; los insensatos desprecian la sabiduría", ref: "Proverbios 1:7" },
+  { text: "Bienaventurados los de limpio corazón, porque ellos verán a Dios", ref: "Mateo 5:8" },
+  { text: "Bienaventurados los que tienen hambre y sed de justicia, porque ellos serán saciados", ref: "Mateo 5:6" },
+  { text: "Bienaventurados los misericordiosos, porque ellos alcanzarán misericordia", ref: "Mateo 5:7" },
+  { text: "El corazón alegre constituye buen remedio; mas el espíritu triste seca los huesos", ref: "Proverbios 17:22" },
+  { text: "Por tanto, como en un cuerpo tenemos muchos miembros, y todos los miembros no tienen la misma función", ref: "Romanos 12:4" },
+  { text: "Estén siempre preparados para responder a todo el que les pida razón de la esperanza que hay en ustedes", ref: "1 Pedro 3:15" },
+  { text: "No se turbe vuestro corazón; creéis en Dios, creed también en mí", ref: "Juan 14:1" },
+  { text: "Y él dijo: Mi presencia irá contigo, y te daré descanso", ref: "Éxodo 33:14" },
+  { text: "Mi Dios, pues, suplirá todo lo que os falta conforme a sus riquezas en gloria en Cristo Jesús", ref: "Filipenses 4:19" },
+  { text: "Así como el hierro se afila con hierro, así un amigo se afila con su amigo", ref: "Proverbios 27:17" },
+  { text: "Porque donde dos o tres se reúnen en mi nombre, allí estoy yo en medio de ellos", ref: "Mateo 18:20" },
+  { text: "Sé fiel hasta la muerte y yo te daré la corona de la vida", ref: "Apocalipsis 2:10" },
+];
+
+// ==================== GAME STATE ====================
+let gameState = {
+  players: [],
+  selectedCategory: 'all',
+  showHint: true,
+  useTimer: true,
+  currentWord: null,
+  impostorIndex: -1,
+  currentRevealIndex: 0,
+  cardFlipped: false,
+  timerInterval: null,
+  timerSeconds: 60,
+  timerRunning: false,
+  impostorRevealed: false
+};
+
+// Tracks used word indices across rounds (same session)
+let usedWordIndices = new Set();
+
+// ==================== FISHER-YATES SHUFFLE ====================
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ==================== PICK A FRESH WORD ====================
+function pickWord(category) {
+  let pool = WORDS.map((w, i) => ({ ...w, _idx: i }));
+  if (category !== 'all') {
+    pool = pool.filter(w => w.category === category);
+  }
+  if (pool.length === 0) pool = WORDS.map((w, i) => ({ ...w, _idx: i }));
+
+  // Prefer unused words
+  let fresh = pool.filter(w => !usedWordIndices.has(w._idx));
+  if (fresh.length === 0) {
+    // All words in pool have been used — reset pool usage but keep global set for other categories
+    pool.forEach(w => usedWordIndices.delete(w._idx));
+    fresh = pool;
+    showToast('¡Todas las palabras usadas! Reiniciando lista 🔄');
+  }
+
+  // Pick randomly from fresh pool using a shuffled pick (not just Math.random once)
+  const shuffled = shuffleArray(fresh);
+  const chosen = shuffled[0];
+  usedWordIndices.add(chosen._idx);
+  updateUsedBadge();
+  return chosen;
+}
+
+function resetUsedWords() {
+  usedWordIndices.clear();
+  updateUsedBadge();
+  showToast('Lista de palabras reiniciada ✨');
+}
+
+function updateUsedBadge() {
+  const el = document.getElementById('used-words-badge');
+  if (el) el.textContent = `🎲 ${usedWordIndices.size} palabra${usedWordIndices.size !== 1 ? 's' : ''} ya usada${usedWordIndices.size !== 1 ? 's' : ''} esta sesión`;
+}
+
+// ==================== SCREEN MANAGEMENT ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    if (s.classList.contains('active')) {
+      s.classList.add('exit');
+      s.classList.remove('active');
+      setTimeout(() => s.classList.remove('exit'), 500);
+    }
+  });
+  setTimeout(() => {
+    const target = document.getElementById(id);
+    if (target) target.classList.add('active');
+  }, 50);
+}
+
+// ==================== PLAYERS ====================
+function addPlayer() {
+  const input = document.getElementById('player-input');
+  const name = input.value.trim();
+  if (!name) { showToast('Escribe un nombre primero'); return; }
+  if (gameState.players.includes(name)) { showToast('Ese nombre ya existe'); input.value = ''; return; }
+  if (gameState.players.length >= 20) { showToast('Máximo 20 jugadores'); return; }
+  gameState.players.push(name);
+  input.value = '';
+  input.focus();
+  renderPlayersList();
+}
+
+function removePlayer(idx) {
+  gameState.players.splice(idx, 1);
+  renderPlayersList();
+}
+
+function renderPlayersList() {
+  const list = document.getElementById('players-list');
+  const count = gameState.players.length;
+  list.innerHTML = gameState.players.map((p, i) => `
+    <div class="player-item">
+      <div class="player-num">${i + 1}</div>
+      <div class="player-name">${escapeHtml(p)}</div>
+      <button class="btn-remove" onclick="removePlayer(${i})">✕</button>
+    </div>
+  `).join('');
+  document.getElementById('player-count-text').textContent = `${count} jugador${count !== 1 ? 'es' : ''}`;
+  document.getElementById('btn-to-settings').disabled = count < 3;
+}
+
+// ==================== SETTINGS ====================
+function selectCat(btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  gameState.selectedCategory = btn.dataset.cat;
+}
+
+// ==================== START GAME ====================
+function startGame() {
+  gameState.showHint = document.getElementById('toggle-hint').checked;
+  gameState.useTimer = document.getElementById('toggle-timer').checked;
+
+  const wordObj = pickWord(gameState.selectedCategory);
+  gameState.currentWord = wordObj;
+
+  // Randomize impostor with extra entropy
+  gameState.impostorIndex = Math.floor(Math.random() * gameState.players.length);
+  gameState.currentRevealIndex = 0;
+  gameState.impostorRevealed = false;
+
+  resetReveal();
+  showScreen('screen-reveal');
+  updateRevealScreen();
+}
+
+function resetReveal() {
+  gameState.currentRevealIndex = 0;
+  resetCard();
+}
+
+function resetCard() {
+  const card = document.getElementById('flip-card');
+  const back = document.getElementById('flip-back');
+  card.classList.remove('flipped');
+  back.classList.remove('impostor-card');
+  document.getElementById('btn-next-player').style.display = 'none';
+  gameState.cardFlipped = false;
+}
+
+function updateRevealScreen() {
+  const idx = gameState.currentRevealIndex;
+  const total = gameState.players.length;
+  const name = gameState.players[idx];
+  const isImpostor = idx === gameState.impostorIndex;
+
+  document.getElementById('reveal-progress').textContent = `Jugador ${idx + 1} de ${total}`;
+  document.getElementById('reveal-progress-bar').style.width = `${(idx / total) * 100}%`;
+  document.getElementById('reveal-player-name').textContent = name;
+
+  const back = document.getElementById('flip-back');
+  const wordEl = document.getElementById('flip-word');
+  const hintEl = document.getElementById('flip-hint');
+
+  if (isImpostor) {
+    wordEl.innerHTML = `<span style="font-size:1rem;opacity:0.7;display:block;margin-bottom:4px;">⚠️ ERES EL</span>IMPOSTOR`;
+    hintEl.textContent = gameState.showHint
+      ? '🕵️ Pista: ' + gameState.currentWord.hint
+      : 'Blefea bien... no dejes que te descubran 😈';
+    back.classList.add('impostor-card');
+  } else {
+    wordEl.textContent = gameState.currentWord.word;
+    hintEl.textContent = '';
+    back.classList.remove('impostor-card');
+  }
+}
+
+function flipCard() {
+  const card = document.getElementById('flip-card');
+  const btn = document.getElementById('btn-next-player');
+  if (gameState.cardFlipped) {
+    card.classList.remove('flipped');
+    gameState.cardFlipped = false;
+  } else {
+    card.classList.add('flipped');
+    gameState.cardFlipped = true;
+    if (btn.style.display === 'none') {
+      setTimeout(() => { btn.style.display = 'inline-flex'; }, 500);
+    }
+  }
+}
+
+function nextPlayer() {
+  gameState.currentRevealIndex++;
+  if (gameState.currentRevealIndex >= gameState.players.length) {
+    setupDiscussion();
+    showScreen('screen-discussion');
+  } else {
+    resetCard();
+    updateRevealScreen();
+  }
+}
+
+// ==================== DISCUSSION ====================
+function setupDiscussion() {
+  const timerEl = document.getElementById('timer-display');
+  const timerCtrl = document.getElementById('timer-controls');
+
+  if (gameState.useTimer) {
+    timerEl.style.display = 'block';
+    timerCtrl.style.display = 'flex';
+    setTimer(60, document.querySelector('.timer-preset[data-seconds="60"]'));
+  } else {
+    timerEl.style.display = 'none';
+    timerCtrl.style.display = 'none';
+  }
+
+  if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+  gameState.timerRunning = false;
+  document.getElementById('timer-start-stop').textContent = '▶ Iniciar';
+
+  document.getElementById('players-discuss-list').innerHTML =
+    gameState.players.map(p => `<div class="player-chip">${escapeHtml(p)}</div>`).join('');
+}
+
+function setTimer(seconds, btn) {
+  if (btn && btn.dataset.seconds !== undefined && btn.dataset.seconds !== '0') {
+    document.querySelectorAll('.timer-preset').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gameState.timerSeconds = seconds;
+    if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+    gameState.timerRunning = false;
+    document.getElementById('timer-start-stop').textContent = '▶ Iniciar';
+    updateTimerDisplay(seconds);
+    document.getElementById('timer-display').classList.remove('urgent');
+  } else {
+    if (gameState.timerRunning) {
+      clearInterval(gameState.timerInterval);
+      gameState.timerRunning = false;
+      document.getElementById('timer-start-stop').textContent = '▶ Continuar';
+    } else {
+      gameState.timerRunning = true;
+      document.getElementById('timer-start-stop').textContent = '⏸ Pausar';
+      let remaining = gameState.timerSeconds;
+      gameState.timerInterval = setInterval(() => {
+        remaining--;
+        gameState.timerSeconds = remaining;
+        updateTimerDisplay(remaining);
+        if (remaining <= 10) document.getElementById('timer-display').classList.add('urgent');
+        if (remaining <= 0) {
+          clearInterval(gameState.timerInterval);
+          gameState.timerRunning = false;
+          document.getElementById('timer-start-stop').textContent = '▶ Iniciar';
+          document.getElementById('timer-display').textContent = '⏰';
+          document.getElementById('timer-display').classList.remove('urgent');
+          showToast('¡Tiempo agotado! Es hora de votar');
+        }
+      }, 1000);
+    }
+  }
+}
+
+function updateTimerDisplay(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  document.getElementById('timer-display').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ==================== RESULTS ====================
+function revealImpostor() {
+  const impostorName = gameState.players[gameState.impostorIndex];
+  const wordObj = gameState.currentWord;
+
+  document.getElementById('mystery-card').classList.add('hidden');
+  const card = document.getElementById('result-card');
+  card.classList.remove('hidden');
+  card.classList.add('revealed-impostor');
+
+  document.getElementById('result-emoji').textContent = '😈';
+  document.getElementById('result-name').textContent = impostorName;
+  document.getElementById('result-name').className = 'result-impostor-name';
+  document.getElementById('result-role').textContent = '¡ERA EL IMPOSTOR!';
+  document.getElementById('result-word').textContent = wordObj.word;
+
+  const allList = document.getElementById('all-revealed-list');
+  allList.classList.remove('hidden');
+  allList.innerHTML = gameState.players.map((p, i) => {
+    const isImp = i === gameState.impostorIndex;
+    return `
+      <div class="revealed-player-item ${isImp ? 'is-impostor' : 'is-safe'}">
+        <span class="rp-icon">${isImp ? '😈' : '✝️'}</span>
+        <span class="rp-name">${escapeHtml(p)}</span>
+        <span class="rp-badge ${isImp ? 'impostor' : 'safe'}">${isImp ? 'IMPOSTOR' : 'Creyente'}</span>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('result-actions').style.display = 'flex';
+  gameState.impostorRevealed = true;
+  launchConfetti();
+}
+
+// ==================== PLAY AGAIN ====================
+function playAgainSameTeam() {
+  gameState.impostorRevealed = false;
+  document.getElementById('mystery-card').classList.remove('hidden');
+  document.getElementById('result-card').classList.add('hidden');
+  document.getElementById('result-card').classList.remove('revealed-impostor', 'revealed-safe');
+  document.getElementById('all-revealed-list').classList.add('hidden');
+  document.getElementById('result-actions').style.display = 'none';
+  startGame();
+}
+
+function playAgainNewGame() {
+  gameState = {
+    players: [],
+    selectedCategory: 'all',
+    showHint: true,
+    useTimer: true,
+    currentWord: null,
+    impostorIndex: -1,
+    currentRevealIndex: 0,
+    cardFlipped: false,
+    timerInterval: null,
+    timerSeconds: 60,
+    timerRunning: false,
+    impostorRevealed: false
+  };
+  document.getElementById('players-list').innerHTML = '';
+  document.getElementById('player-count-text').textContent = '0 jugadores';
+  document.getElementById('btn-to-settings').disabled = true;
+  document.getElementById('mystery-card').classList.remove('hidden');
+  document.getElementById('result-card').classList.add('hidden');
+  document.getElementById('result-card').classList.remove('revealed-impostor', 'revealed-safe');
+  document.getElementById('all-revealed-list').classList.add('hidden');
+  document.getElementById('result-actions').style.display = 'none';
+  showScreen('screen-home');
+}
+
+// ==================== MODAL ====================
+function openModal() { document.getElementById('modal-how').classList.add('open'); }
+function closeModal() { document.getElementById('modal-how').classList.remove('open'); }
+document.getElementById('modal-how').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+
+// ==================== TOAST ====================
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#d4af37','#f0c855','#c0392b','#e74c3c','#27ae60','#f5e6c8','#3498db'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const x = Math.random() * 100;
+    const delay = Math.random() * 1.5;
+    const dur = 2.5 + Math.random() * 2;
+    const size = 6 + Math.random() * 10;
+    const shape = Math.random() > 0.5 ? '50%' : '0';
+    p.style.cssText = `left:${x}%;top:-20px;width:${size}px;height:${size}px;background:${color};border-radius:${shape};animation:confettiFall ${dur}s ease ${delay}s forwards;`;
+    wrap.appendChild(p);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 5000);
+}
+
+// ==================== CANVAS BACKGROUND ====================
+(function initCanvas() {
+  const canvas = document.getElementById('canvas-bg');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], particles = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+  for (let i = 0; i < 120; i++) {
+    stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.5 + 0.3, a: Math.random(), da: (Math.random() - 0.5) * 0.003, dy: Math.random() * 0.0002 + 0.00005 });
+  }
+  for (let i = 0; i < 5; i++) {
+    particles.push({ x: Math.random(), y: Math.random(), r: 40 + Math.random() * 80, a: Math.random() * 0.08, da: (Math.random() - 0.5) * 0.0005, dx: (Math.random() - 0.5) * 0.0003, dy: (Math.random() - 0.5) * 0.0003 });
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const bg = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, H);
+    bg.addColorStop(0, '#0c1a38'); bg.addColorStop(0.5, '#080f22'); bg.addColorStop(1, '#040b1a');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.dx; p.y += p.dy; p.a += p.da;
+      if (p.x < -0.1) p.x = 1.1; if (p.x > 1.1) p.x = -0.1;
+      if (p.y < -0.1) p.y = 1.1; if (p.y > 1.1) p.y = -0.1;
+      if (p.a < 0) p.a = 0.02; if (p.a > 0.1) p.a = 0.08;
+      const g = ctx.createRadialGradient(p.x * W, p.y * H, 0, p.x * W, p.y * H, p.r);
+      g.addColorStop(0, `rgba(212,175,55,${p.a})`); g.addColorStop(1, 'rgba(212,175,55,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+    stars.forEach(s => {
+      s.y += s.dy; s.a += s.da;
+      if (s.y > 1) s.y = 0;
+      if (s.a < 0) s.da = Math.abs(s.da);
+      if (s.a > 1) s.da = -Math.abs(s.da);
+      ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245,230,200,${s.a * 0.7})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ==================== HELPERS ====================
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ==================== ROTATING VERSES (no repeat until all shown) ====================
+let verseQueue = [];
+function getNextVerse() {
+  if (verseQueue.length === 0) {
+    verseQueue = shuffleArray([...Array(VERSES.length).keys()]);
+  }
+  return VERSES[verseQueue.pop()];
+}
+
+function setRandomVerse() {
+  const v = getNextVerse();
+  const el = document.getElementById('home-verse');
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.7s ease';
+  setTimeout(() => {
+    el.innerHTML = `"${v.text}"<br><span style="opacity:0.7;">— ${v.ref}</span>`;
+    el.style.opacity = '1';
+  }, 200);
+}
+
+setRandomVerse();
+// Rotate verse every 12 seconds on home screen
+setInterval(() => {
+  if (document.getElementById('screen-home').classList.contains('active')) {
+    setRandomVerse();
+  }
+}, 12000);
+
+document.getElementById('player-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') addPlayer();
+});
+</script>
+</body>
+</html>
